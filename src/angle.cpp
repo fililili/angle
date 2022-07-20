@@ -30,8 +30,8 @@ public:
         return _val * a._value;
     }
 
-    // multiple of float value is slowly
-    // multiple of float value has float error
+    // multiple of floating point value is slowly
+    // multiple of floatint point value has floating point error
     friend constexpr angle operator* (angle a, std::floating_point auto val) {
         long double max_value = std::numeric_limits<std::uint32_t>::max();
         max_value += 1;
@@ -62,10 +62,10 @@ public:
         return a1._value % a2._value;
     }
 
-    friend constexpr angle angle_by_degree(std::floating_point auto deg);
-    friend constexpr angle angle_by_radian(std::floating_point auto rad);
-    template <typename ret_t> friend constexpr ret_t convert_to_degree(angle a);
-    template <typename ret_t> friend constexpr ret_t convert_to_radian(angle a);
+    friend constexpr angle degree_to_angle(std::floating_point auto deg);
+    friend constexpr angle radian_to_angle(std::floating_point auto rad);
+    template <typename ret_t> friend constexpr ret_t angle_to_degree(angle a);
+    template <typename ret_t> friend constexpr ret_t angle_to_radian(angle a);
 
 private:
     constexpr angle(std::uint32_t value) : _value{value}{}
@@ -73,8 +73,8 @@ private:
 };
 
 
-// convert degree to angle has float error, but 45_deg, 90_deg, 180_deg, 0_deg is precise
-inline constexpr angle angle_by_degree(std::floating_point auto deg) {
+// convert degree to angle has floating point error, but 45_deg, 90_deg, 180_deg, 0_deg is precise
+inline constexpr angle degree_to_angle(std::floating_point auto deg) {
     decltype(deg) max_value = std::numeric_limits<std::uint32_t>::max();
     max_value += 1.0;
 
@@ -83,8 +83,8 @@ inline constexpr angle angle_by_degree(std::floating_point auto deg) {
     return std::round((deg / 360.0) * max_value);
 }
 
-// convert degree to angle has float error, but pi_rad is precise
-inline constexpr angle angle_by_radian(std::floating_point auto rad) {
+// convert degree to angle has floating point error
+inline constexpr angle radian_to_angle(std::floating_point auto rad) {
     decltype(rad) max_value = std::numeric_limits<std::uint32_t>::max();
     max_value += 1.0;
 
@@ -94,25 +94,25 @@ inline constexpr angle angle_by_radian(std::floating_point auto rad) {
 }
 
 constexpr angle operator"" _deg(long double deg) {
-    return angle_by_degree(deg);
+    return degree_to_angle(deg);
 }
 
 constexpr angle operator"" _rad(long double rad) {
-    return angle_by_radian(rad);
+    return radian_to_angle(rad);
 }
 
-// convert angle to degree has float error, can be improved
+// convert angle to degree has floating point error, can be improved
 template <typename ret_t>
-constexpr ret_t convert_to_degree(angle a) {
+constexpr ret_t angle_to_degree(angle a) {
     static_assert(std::floating_point<ret_t> || std::integral<ret_t>);
     auto unit = 1.0_deg;
     ret_t unit_val = unit._value;
     return a._value / unit_val;
 }
 
-// conver angle to radian has float error, can be improved
+// conver angle to radian has floating point error, can be improved
 template <typename ret_t>
-constexpr ret_t convert_to_radian(angle a) {
+constexpr ret_t angle_to_radian(angle a) {
     static_assert(std::floating_point<ret_t> || std::integral<ret_t>);
     auto unit = 1.0_rad;
     ret_t unit_val = unit._value;
@@ -155,6 +155,6 @@ static_assert(29.0_deg + 48.0_deg == 77.0_deg);
 static_assert(349.0_deg + 18.0_deg == 7.0_deg);
 
 int main() {
-    std::cout << "180.0_deg is: " <<  convert_to_degree<double>(180.0_deg) << "_deg" << std::endl;
-    std::cout << "180.0_deg is: " <<  convert_to_radian<double>(180.0_deg) << "_rad" << std::endl;
+    std::cout << "180.0_deg is: " <<  angle_to_degree<double>(180.0_deg) << "_deg" << std::endl;
+    std::cout << "180.0_deg is: " <<  angle_to_radian<double>(180.0_deg) << "_rad" << std::endl;
 }
