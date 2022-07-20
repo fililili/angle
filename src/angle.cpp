@@ -24,10 +24,14 @@ public:
         return a1 + (-a2);
     }
 
+    // multiple of integral is precise
     friend constexpr angle operator* (angle a, std::integral auto val) {
-        return a._value * val;
+        std::uint32_t _val = val;
+        return _val * a._value;
     }
 
+    // multiple of float value is slowly
+    // multiple of float value has float error
     friend constexpr angle operator* (angle a, std::floating_point auto val) {
         long double max_value = std::numeric_limits<std::uint32_t>::max();
         max_value += 1;
@@ -51,25 +55,27 @@ public:
     }
     
     friend constexpr angle operator% (angle a1, angle a2) {
-        // check
+        // only support special a2, check firstly
         auto times = std::numeric_limits<std::uint32_t>::max() / a2._value + 1;
         assert(a2 * times == 0);
 
         return a1._value % a2._value;
     }
 
-    friend constexpr angle angle_by_degree(long double deg);
-    friend constexpr angle angle_by_radian(long double rad);
-    friend constexpr long double convert_to_degree(angle a);
-    friend constexpr long double convert_to_radian(angle a);
+    friend constexpr angle angle_by_degree(std::floating_point auto deg);
+    friend constexpr angle angle_by_radian(std::floating_point auto rad);
+    template <typename ret_t> friend constexpr ret_t convert_to_degree(angle a);
+    template <typename ret_t> friend constexpr ret_t convert_to_radian(angle a);
 
 private:
     constexpr angle(std::uint32_t value) : _value{value}{}
     std::uint32_t _value;
 };
 
-inline constexpr angle angle_by_degree(long double deg) {
-    long double max_value = std::numeric_limits<std::uint32_t>::max();
+
+// convert degree to angle has float error, but 45_deg, 90_deg, 180_deg, 0_deg is precise
+inline constexpr angle angle_by_degree(std::floating_point auto deg) {
+    decltype(deg) max_value = std::numeric_limits<std::uint32_t>::max();
     max_value += 1.0;
 
     deg = std::fmod(deg, 360.0);
@@ -77,8 +83,9 @@ inline constexpr angle angle_by_degree(long double deg) {
     return std::round((deg / 360.0) * max_value);
 }
 
-inline constexpr angle angle_by_radian(long double rad) {
-    long double max_value = std::numeric_limits<std::uint32_t>::max();
+// convert degree to angle has float error, but pi_rad is precise
+inline constexpr angle angle_by_radian(std::floating_point auto rad) {
+    decltype(rad) max_value = std::numeric_limits<std::uint32_t>::max();
     max_value += 1.0;
 
     rad = std::fmod(rad, 2 * std::numbers::pi);
@@ -94,15 +101,21 @@ constexpr angle operator"" _rad(long double rad) {
     return angle_by_radian(rad);
 }
 
-constexpr long double convert_to_degree(angle a) {
+// convert angle to degree has float error, can be improved
+template <typename ret_t>
+constexpr ret_t convert_to_degree(angle a) {
+    static_assert(std::floating_point<ret_t> || std::integral<ret_t>);
     auto unit = 1.0_deg;
-    long double unit_val = unit._value;
+    ret_t unit_val = unit._value;
     return a._value / unit_val;
 }
 
-constexpr long double convert_to_radian(angle a) {
+// conver angle to radian has float error, can be improved
+template <typename ret_t>
+constexpr ret_t convert_to_radian(angle a) {
+    static_assert(std::floating_point<ret_t> || std::integral<ret_t>);
     auto unit = 1.0_rad;
-    long double unit_val = unit._value;
+    ret_t unit_val = unit._value;
     return a._value / unit_val;
 }
 
@@ -135,7 +148,13 @@ static_assert(is_near(1.0_deg * 360.0, 0.0_deg, 0.1_deg));
 static_assert(0.0_deg == 0.0_rad);
 static_assert(180.0_deg == 3.141592653_rad);
 
+static_assert(120.0_deg % 90.0_deg == 30.0_deg);
+static_assert(120.0_deg % 22.5_deg == 7.5_deg);
+
+static_assert(29.0_deg + 48.0_deg == 77.0_deg);
+static_assert(349.0_deg + 18.0_deg == 7.0_deg);
+
 int main() {
-    std::cout << "180.0_deg is: " <<  convert_to_degree(180.0_deg) << "_deg" << std::endl;
-    std::cout << "180.0_deg is: " <<  convert_to_radian(180.0_deg) << "_rad" << std::endl;
+    std::cout << "180.0_deg is: " <<  convert_to_degree<double>(180.0_deg) << "_deg" << std::endl;
+    std::cout << "180.0_deg is: " <<  convert_to_radian<double>(180.0_deg) << "_rad" << std::endl;
 }
