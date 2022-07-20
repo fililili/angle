@@ -46,13 +46,7 @@ public:
         return a * val;
     }
 
-    friend constexpr auto operator<=> (angle a1, angle a2) {
-        return a1._value <=> a2._value;
-    }
-
-    friend constexpr auto operator== (angle a1, angle a2) {
-        return 0 == a1 <=> a2;
-    }
+    constexpr auto operator<=> (const angle&) const = default;
     
     friend constexpr angle operator% (angle a1, angle a2) {
         // only support special a2, check firstly
